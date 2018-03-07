@@ -21,15 +21,20 @@ def getpopw(tcl,v):
 
     s=tcl.groupby(v).size()
 
-    # check to ensure the intersection is being used
-    # if no levels add up to length of labels, no intersection
-    s_labs=np.array(s.index.labels)
-    check=np.sum(s_labs,axis=0)
-    intersects=any(check==len(s.index.labels))
+    if(len(v)>1):
+        # check to ensure the intersection is being used
+        # if no levels add up to length of labels, no intersection
+        s_labs=np.array(s.index.labels)
+        check=np.sum(s_labs,axis=0)
+        intersects=any(check==len(s.index.labels))
 
-    w=0
-    if intersects:
-        w+=float(s[len(s)-1])/float(tcl.shape[0])
+        w=0
+        if intersects:
+            w+=float(s[len(s)-1])/float(tcl.shape[0])
+
+    else:
+
+            w=float(s[len(s)-1])/float(tcl.shape[0])
 
     return w
 
