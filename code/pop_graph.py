@@ -93,7 +93,7 @@ def prep_traits(traits,subset=None,sub_op='union',exclude=None,drop_zero=False):
         return traits
 
 
-def co_occurence_matrix(traits,subset=None,sub_op='union',exclude=None,drop_zero=False,pop_weights=True):
+def co_occurence_matrix(traits,subset=None,sub_op='union',exclude=None,drop_zero=False,pop_weights=None):
 
     """
     subset: an optional list of traits for subsetting observations
@@ -108,12 +108,12 @@ def co_occurence_matrix(traits,subset=None,sub_op='union',exclude=None,drop_zero
 
     affmat=1-np.matrix(metrics.pairwise.pairwise_distances(tcl_t,metric='jaccard'))
 
-    if pop_weights:
+    if pop_weights is not None:
 
-        popw=popwmat(traits)
+        # popw=popwmat(traits)
 
         ## weight the co-occurence matrix by pop size ##
-        affmat=np.array(affmat)*np.array(1+popw)
+        affmat=np.array(affmat)*np.array(1+pop_weights)
 
     return affmat
 
@@ -247,7 +247,14 @@ def build_pop_graphs(dat,locs,subset=None,sub_op='union',exclude=None,pop_weight
         if (subset is not None) or (exclude is not None) or (drop_zero==True):
             traits=prep_traits(traits,subset,sub_op,exclude,drop_zero)
 
-        co=co_occurence_matrix(traits=traits,subset=subset,sub_op=sub_op,exclude=exclude,pop_weights=pop_weights,drop_zero=drop_zero)
+        # Generate population weights
+        if pop_weights:
+            pw = popwmat(traits)
+        else:
+            pw = None
+
+        # Generate co-occurrence matrix
+        co=co_occurence_matrix(traits=traits,subset=subset,sub_op=sub_op,exclude=exclude,pop_weights=pw,drop_zero=drop_zero)
 
         labels=traits.columns
         labels=labels.tolist()
@@ -263,7 +270,7 @@ def build_pop_graphs(dat,locs,subset=None,sub_op='union',exclude=None,pop_weight
             afclust=cluster.AffinityPropagation(affinity='precomputed',max_iter=1000)
             part=dict(zip(labels,afclust.fit(co).labels_))
 
-        loc_graphs[loc]=(G,part,co)
+        loc_graphs[loc]=(G,part,co,pw)
 
     return loc_graphs
 
