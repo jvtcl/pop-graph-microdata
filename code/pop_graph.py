@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 from scipy import stats
+from scipy.spatial import distance
 from sklearn import neighbors, metrics, cluster
 from brewer2mpl import qualitative
 import community
@@ -303,18 +304,28 @@ def part_dist(loc_graphs,loc1,loc2,metric='info',pop_weights=True):
 
     if pop_weights:
 
-        G1_popsize=np.diagonal(G1_co)-1
-        G2_popsize=np.diagonal(G2_co)-1
+        # G1_popsize=np.diagonal(G1_co)-1
+        # G2_popsize=np.diagonal(G2_co)-1
+        #
+        # pop_score=sum(abs(G1_popsize-G2_popsize))
+        # pop_score=pop_score/G1_co.shape[0] # normalize by number of comparisons
 
-        pop_score=sum(abs(G1_popsize-G2_popsize))
-        pop_score=pop_score/G1_co.shape[0] # normalize by number of comparisons
+        G1_pw = loc_graphs[loc1][3]
+        G2_pw = loc_graphs[loc2][3]
+
+        upper = np.triu_indices_from(G1_pw)
+        G1_pw=G1_pw[upper]
+        G2_pw=G2_pw[upper]
+
+        pop_score = distance.cityblock(G1_pw, G2_pw)
+        pop_score = pop_score/G1_pw.shape[0] # normalize by number of comparisons
 
         dist=dist*(1+pop_score)
 
     return dist
 
 
-def part_dist_mat(loc_graphs,metric='info',verbose=True):
+def part_dist_mat(loc_graphs,metric='info',pop_weights=True,verbose=True):
 
     """
     Generates a distance matrix based on label swapping among the
@@ -345,6 +356,6 @@ def part_dist_mat(loc_graphs,metric='info',verbose=True):
             #     md[loc_pos,comp_pos]=info_dist(loc_graphs,loc,comp)
             # elif type=='mod':
             #     md[loc_pos,comp_pos]=mod_dist(loc_graphs,loc,comp)
-            md[loc_pos,comp_pos]=part_dist(loc_graphs,loc,comp,metric=metric)
+            md[loc_pos,comp_pos]=part_dist(loc_graphs,loc,comp,metric=metric,pop_weights=pop_weights)
 
     return md
