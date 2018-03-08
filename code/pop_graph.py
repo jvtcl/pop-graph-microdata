@@ -38,6 +38,20 @@ def getpopw(tcl,v):
 
     return w
 
+
+def popwmat(traits):
+
+    popw=np.empty(([traits.shape[1]]*2))
+
+    for i in traits.columns:
+
+        ix=np.where(traits.columns==i)[0][0]
+        pw=[getpopw(traits,[i,j]) for j in traits.columns]
+        popw[ix]=pw
+
+    return popw
+
+
 def prep_traits(traits,subset=None,sub_op='union',exclude=None,drop_zero=False):
 
         ## subset by target population(s), if given
@@ -95,16 +109,8 @@ def co_occurence_matrix(traits,subset=None,sub_op='union',exclude=None,drop_zero
     affmat=1-np.matrix(metrics.pairwise.pairwise_distances(tcl_t,metric='jaccard'))
 
     if pop_weights:
-        ## generate pop weights matrix ##
 
-        popw=np.empty_like(affmat)
-
-        for i in traits.columns:
-
-            ix=np.where(traits.columns==i)[0][0]
-            pw=[getpopw(traits,[i,j]) for j in traits.columns]
-            # print pw
-            popw[ix]=pw
+        popw=popwmat(traits)
 
         ## weight the co-occurence matrix by pop size ##
         affmat=np.array(affmat)*np.array(1+popw)
