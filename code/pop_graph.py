@@ -7,6 +7,7 @@ from scipy.spatial import distance
 from sklearn import neighbors, metrics, cluster
 from brewer2mpl import qualitative
 import community
+import pysal as ps
 import matplotlib.pyplot as plt
 
 
@@ -117,6 +118,22 @@ def co_occurence_matrix(traits,subset=None,sub_op='union',exclude=None,drop_zero
         affmat=np.array(affmat)*np.array(1+pop_weights)
 
     return affmat
+
+
+def simplify_co_occurrence(co,nn=3):
+
+    # quintile breaks (crude, still need to account for upper/diagonals)
+    q = ps.Quantiles(co).yb
+    q = np.reshape(q, co.shape)
+
+    # nearest neighbors graph
+    knn = neighbors.NearestNeighbors(n_neighbors = nn)
+    neigh = knn.fit(co)
+    knn_mat = neigh.kneighbors_graph(co).toarray()
+
+    out = np.multiply(q,knn_mat)
+
+    return out
 
 
 def popGraph(affmat,labels,cut_links=None,exclude=None,verbose=False):
