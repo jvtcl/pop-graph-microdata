@@ -209,7 +209,7 @@ def getCentrality_all(loc_graphs,verbose=True):
     return cent
 
 
-def drawPopGraph(G,tcl=None,part=None):
+def drawPopGraph(G,tcl=None,part=None,edge_stand=True,emph=True):
 
     """
     Draws the weighted graph of population traits for an area of interest.
@@ -223,7 +223,10 @@ def drawPopGraph(G,tcl=None,part=None):
 
     # edge values, for plotting
     edgeval=np.array([i[2].values()[0] for i in G.edges(data=True)])
-    edgeval=(edgeval-min(edgeval))/(max(edgeval)-min(edgeval)) # range-standardized
+
+    # range-standardize the edges if specified
+    if edge_stand:
+        edgeval=(edgeval-min(edgeval))/(max(edgeval)-min(edgeval))
 
     if part is not None:
         # Colors for community visualization
@@ -238,8 +241,11 @@ def drawPopGraph(G,tcl=None,part=None):
     else:
         node_size=None
 
-    # nx.draw_spring(G,width=edgeval,node_color=node_cols,node_size=node_size,with_labels=True) # original
-    nx.draw_spring(G,width=10*(edgeval**2),node_color=node_cols,node_size=node_size,with_labels=True) # with addl emphasis on edges
+    if emph:
+        nx.draw_spring(G,width=10*(edgeval**2),node_color=node_cols,node_size=node_size,with_labels=True) # with addl emphasis on edges
+    else:
+        nx.draw_spring(G,width=edgeval,node_color=node_cols,node_size=node_size,with_labels=True) # original
+
 
 
 def build_pop_graphs(dat,locs,subset=None,sub_op='union',exclude=None,pop_weights=True,drop_zero=False,cut_links=None,part_method='louvain',verbose=True):
