@@ -280,6 +280,8 @@ def build_pop_graphs(dat,locs,subset=None,sub_op='union',exclude=None,pop_weight
         # Generate co-occurrence matrix
         co=co_occurence_matrix(traits=traits,subset=subset,sub_op=sub_op,exclude=exclude,pop_weights=pw,drop_zero=drop_zero)
 
+        co[np.where(np.isnan(co))] = 0 # give empty co-occurrences zeroes
+
         labels=traits.columns
         labels=labels.tolist()
 
