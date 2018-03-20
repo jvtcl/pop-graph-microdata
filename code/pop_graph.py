@@ -2,6 +2,7 @@ import sys
 import pandas as pd
 import numpy as np
 import networkx as nx
+from networkx.linalg import spectrum
 from scipy import stats
 from scipy.spatial import distance
 from sklearn import neighbors, metrics, cluster
@@ -301,51 +302,22 @@ def build_pop_graphs(dat,locs,subset=None,sub_op='union',exclude=None,pop_weight
     return loc_graphs
 
 
-def part_dist(loc_graphs,loc1,loc2,metric='info',pop_weights=True):
+def part_dist(loc_graphs,loc1,loc2):
 
-    G1=loc_graphs[loc1][0]
-    G1_part=loc_graphs[loc1][1]
-    G1_co=loc_graphs[loc1][2]
+    g_loc1 = loc_graphs[loc1][0] # graph loc 1
+    p_loc1 = loc_graphs[loc1][1].values() # partition loc 1
 
-    G2=loc_graphs[loc2][0]
-    G2_part=loc_graphs[loc2][1]
-    G2_co=loc_graphs[loc2][2]
+    g_loc2 = loc_graphs[loc2][0] # graph loc 2
+    p_loc2 = loc_graphs[loc2][1].values() # partition loc 2
 
-    if metric=='info':
+    # compute laplacian spectrum for each graph
+    spec1 = spectrum.laplacian_spectrum(g_loc1)
+    spec2 = spectrum.laplacian_spectrum(g_loc2)
 
-        dist=1-metrics.normalized_mutual_info_score(G1_part.values(),G2_part.values())
+    e = stats.energy_distance(spec1,spec2)
+    m = metrics.adjusted_mutual_info_score(p_loc1,p_loc2)
 
-    elif metric=='mod':
-
-        G1_mod=community.modularity(G1_part,G1)
-        G1_swap=community.modularity(G2_part,G1)
-        dA=abs(G1_swap-G1_mod)
-
-        G2_mod = community.modularity(G2_part,G2)
-        G2_swap = community.modularity(G1_part,G2)
-        dB=abs(G2_swap-G2_mod)
-
-        dist=dA+dB
-
-    if pop_weights:
-
-        # G1_popsize=np.diagonal(G1_co)-1
-        # G2_popsize=np.diagonal(G2_co)-1
-        #
-        # pop_score=sum(abs(G1_popsize-G2_popsize))
-        # pop_score=pop_score/G1_co.shape[0] # normalize by number of comparisons
-
-        G1_pw = loc_graphs[loc1][3]
-        G2_pw = loc_graphs[loc2][3]
-
-        upper = np.triu_indices_from(G1_pw)
-        G1_pw=G1_pw[upper]
-        G2_pw=G2_pw[upper]
-
-        pop_score = distance.cityblock(G1_pw, G2_pw)
-        pop_score = pop_score/G1_pw.shape[0] # normalize by number of comparisons
-
-        dist=dist*(1+pop_score)
+    dist = (1-m)*(1+e)
 
     return dist
 
@@ -381,6 +353,6 @@ def part_dist_mat(loc_graphs,metric='info',pop_weights=True,verbose=True):
             #     md[loc_pos,comp_pos]=info_dist(loc_graphs,loc,comp)
             # elif type=='mod':
             #     md[loc_pos,comp_pos]=mod_dist(loc_graphs,loc,comp)
-            md[loc_pos,comp_pos]=part_dist(loc_graphs,loc,comp,metric=metric,pop_weights=pop_weights)
+            md[loc_pos,comp_pos]=part_dist(loc_graphs,loc,comp)
 
     return md
